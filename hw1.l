@@ -2,6 +2,7 @@
         #include <stdio.h>
         #include <stdlib.h>
         #include <ctype.h>
+        #include <string.h>
 
         typedef struct node_t {
                 int     index;
@@ -34,18 +35,26 @@
         void insert (char* ID, int TYPE, table_t* self) {
                 node_t* ptr = (node_t*)malloc(sizeof(node_t));
                 node_t* tmp;
-                ptr -> index = self -> number++;
-                ptr -> id = ID;
+                ptr -> index = self -> number++ +1;
+                ptr -> id = (char*)malloc(sizeof(char)*strlen(ID));
+                strcpy(ptr -> id, ID);
                 ptr -> type = TYPE;
                 tmp = look_into(self -> head);
                 tmp -> next = ptr;
-                printf("Insert a symbol:%s\n", ID);
+                printf("Insert a symbol:%s\n", ptr -> id);
         }
-        int  lookup(char*, struct table_t*) {
+        int lookup(char* ID, table_t* self) {
 
         }
-        void dump(node_t*, struct table_t*) {
-                
+        void dump(table_t* self) {
+                printf("\nDumping symbol table...%d\n\n", self -> number);
+                printf("Index\tID\tType\n");
+                const char* type_t[2] = {"int", "double"};
+                node_t* p = self -> head -> next;
+                while(p){
+                        printf("%d\t%s\t%s\n", p -> index, p -> id, type_t[p -> type]);
+                        p = p -> next;
+                }
         }
 %}
 
@@ -55,30 +64,43 @@ symbol    {letter}+({letter}|{digit})*
 number    {digit}+
 double    {digit}*\.{digit}+
 
-%x COMMENT
+%x C_COMMENT
+%x CP_COMMENT
 %x QUOTATION
 %x TYPEI
 %x TYPED
 
 %%
 
+"//"            {printf(" > C++ COMMENT//");
+                 BEGIN(CP_COMMENT);}
+<CP_COMMENT>\n  {printf("\n");BEGIN(INITIAL);}
+<CP_COMMENT>.   {printf("%s", yytext);}
+
+"/*"            {printf(" > C COMMENT START /*\n > ");
+                 BEGIN(C_COMMENT);}
+<C_COMMENT>"*/" {printf("*/ C COMMENT END\n");
+                 BEGIN(INITIAL);}
+<C_COMMENT>\n   {printf("\n > ");}
+<C_COMMENT>.    {printf("%s", yytext);}
+
 [\t ]           {}
-"int"           {BEGIN(TYPEI);}
+(?i:int)        {BEGIN(TYPEI);}
 <TYPEI>[\t ]    {}
 <TYPEI>{symbol} {printf("%s\tint TYPE VAR\n", yytext);
                  if(!symbol_table){create_table();}
                  insert(yytext, 0, symbol_table);
                  BEGIN(INITIAL);}
-"double"        {BEGIN(TYPED);}
+(?i:double)     {BEGIN(TYPED);}
 <TYPED>[\t ]    {}
 <TYPED>{symbol} {printf("%s\tdouble TYPE VAR\n", yytext);
                  if(!symbol_table){create_table();}
                  insert(yytext, 1, symbol_table);
                  BEGIN(INITIAL);}
-"print"         {printf("%s\tPRINT FUNCTIONN\n",yytext);}
-"if"            {printf("%s\tIF FUNCTIONN\n",yytext);}
-"else"          {printf("%s\tELSE FUNCTIONN\n",yytext);}
-"while"         {printf("%s\tWHILE FUNCTIONN\n",yytext);}
+(?i:print)      {printf("%s\tPRINT FUNCTIONN\n",yytext);}
+(?i:if)         {printf("%s\tIF FUNCTIONN\n",yytext);}
+(?i:else)       {printf("%s\tELSE FUNCTIONN\n",yytext);}
+(?i:while)      {printf("%s\tWHILE FUNCTIONN\n",yytext);}
 
 ","             {printf("%s\tCOMMA\n",yytext);}
 ";"             {printf("%s\tSEMICOLON\n",yytext); }
@@ -122,6 +144,8 @@ int main(int argc,char *argv[]) {
                 yyin = fopen(argv[i++],"r");
                 if (!yyin) break;
                 yylex();
+                dump(symbol_table);
+                symbol_table = NULL;
         }
         return 0;
 }
@@ -129,4 +153,3 @@ int main(int argc,char *argv[]) {
 int yywrap(void) {     
         return 1;
 }
-

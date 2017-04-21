@@ -2,7 +2,8 @@ CC     = gcc
 CFLAGS = -ll -g
 LEX    = flex
 OUTPUT = lex.out
-INPUT  = $(PWD)/input_case/basic/*.txt
+BASIC  = $(PWD)/input_case/basic/*.txt
+ADV	   = $(PWD)/input_case/advence/*.txt
 
 $(OUTPUT): lex.yy.c
 	$(CC) $(CFLAGS) -o $(OUTPUT) $<
@@ -15,4 +16,5 @@ clean:
 	rm *.c lex.out
 
 run: $(OUTPUT)
-	./$(OUTPUT) $(INPUT)
+	./$(OUTPUT) $(BASIC)
+	./$(OUTPUT) $(ADV)
