@@ -1,5 +1,5 @@
 CC     = gcc
-CFLAGS = -ll
+CFLAGS = -ll -g
 LEX    = flex
 OUTPUT = lex.out
 INPUT  = $(PWD)/input_case/basic/*.txt
